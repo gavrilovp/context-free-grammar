@@ -25,11 +25,12 @@ main = do
         , "C -> c"
         , "A -> Aa"
         , "A -> "
+        , "S -> AB"
         ]
       rs = S.fromList $ map (\s -> case parse ruleParser "test" s of
                                     Left err -> undefined
                                     Right res -> res) rules
       initial = 'S'
       cfg = CFG nonterminals terminals rs initial
-  print rs
+  print $ nullables cfg
 
