@@ -36,11 +36,13 @@ main = do
         ]
       rs = S.fromList $ map (\s -> case parse ruleParser "test" s of
                                     Left err -> undefined
-                                    Right res -> res) rules2
+                                    Right res -> res) rules
+      rs2 = S.fromList $ map (\s -> case parse ruleParser "test" s of
+                                     Left err -> undefined
+                                     Right res -> res) rules2
       initial = 'S'
-      cfg = CFG nonterminals2 terminals2 rs initial
-      nullablents = nullables cfg
+      cfg = CFG nonterminals terminals rs initial
+      cfg2 = CFG nonterminals2 terminals2 rs2 initial
   print rs
-  print nullablents
-  print $ noncontractingRules rs nullablents
+  print $ noncontractingCFG cfg2
 

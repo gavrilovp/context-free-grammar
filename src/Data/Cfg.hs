@@ -6,10 +6,15 @@ module Data.Cfg
        , CFG(..)
        , nullables 
        , noncontractingRules
+       , noncontractingCFG
        ) where
 
 import qualified Data.Set as S
 import qualified Data.List as L
+import Data.Maybe (isNothing)
+import Control.Monad (replicateM)
+
+import Debug.Trace
 
 type Terminal = Char
 type Nonterminal = Char
@@ -23,6 +28,7 @@ data CFG = CFG
            , productions :: S.Set Rule
            , initial :: Nonterminal
            }
+         deriving Show
 
 instance Show Rule where
   show (Rule nt rp) = show nt ++ " -> " ++ show rp ++ "\n"
@@ -69,16 +75,37 @@ noncontractingRules rs nullnts = generatedRs
    rsContainingNtInRP :: Nonterminal -> S.Set Rule -> S.Set Rule
    rsContainingNtInRP nt = S.filter (isNtInRP nt)
 
+   merge :: [Symbol] -> [Maybe Nonterminal] -> Nonterminal -> [Symbol]
+   merge ss nts nt = if lp == []
+                     then remaining
+                     else lp ++ s ++ (merge (tail remaining) (tail nts) nt)
+     where
+       lp = fst $ L.break (== (Nt nt)) ss 
+       remaining = snd $ L.break (== (Nt nt)) ss
+       s = if isNothing $ head nts
+           then []
+           else [Nt nt]
+
    genRules :: Rule -> Nonterminal -> S.Set Rule 
-   genRules (Rule ntr rp) nt
-     | not $ elem (Nt nt) rp = S.fromList [Rule ntr rp]
-     | otherwise = S.singleton (Rule ntr rp) `S.union`
-                   genRules (Rule ntr $ L.delete (Nt nt) rp) nt
+   genRules (Rule ntr rp) nt = S.fromList [Rule ntr $ merge rp c nt | c <- combinations]
+     where
+       oc = length $ filter (\x -> x == Nt nt) rp
+       combinations = replicateM oc [Just nt, Nothing]
+       
 
    generatedRs = S.unions [S.unions $ map (\r -> genRules r nnt) $
                            S.toList $ rsContainingNtInRP nnt nrs
                  | nnt <- S.toList nullnts]
    
 noncontractingCFG :: CFG -> CFG
-noncontractingCFG (CFG nts _ rs initial) = 
-  undefined
+noncontractingCFG (CFG nts ts rs initial) = if initial `S.member` nts'
+                                            then CFG (nts' `S.union` (S.singleton 'N')) ts rs' initial'
+                                            else CFG nts' ts rs' initial'
+  where
+    nts' = nullables (CFG nts ts rs initial)
+    rs' = if initial `S.member` nts'
+          then S.fromList [Rule 'N' [Nt 'S'], Rule 'N' []] `S.union` noncontractingRules rs nts'
+          else noncontractingRules rs nts'
+    initial' = if initial `S.member` nts'
+               then 'N'
+               else initial
