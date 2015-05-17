@@ -5,9 +5,11 @@ module Data.Cfg
        , Rule(..)
        , CFG(..)
        , nullables 
+       , noncontractingRules
        ) where
 
 import qualified Data.Set as S
+import qualified Data.List as L
 
 type Terminal = Char
 type Nonterminal = Char
@@ -36,7 +38,7 @@ nullables (CFG nts _ rs _) = go knownNullables
         nts'' = calculatedNullables nts'
     
     knownNullables = S.map (\(Rule nt _) -> nt) knownNullableRules
-    knownNullableRules = S.filter (\(Rule _ rp) -> rp == []) rs
+    knownNullableRules = nullableRules rs
 
     isKnownNullable :: Symbol -> Bool
     isKnownNullable (Nt nt) = nt `S.member` knownNullables
@@ -51,8 +53,32 @@ nullables (CFG nts _ rs _) = go knownNullables
     rulesRpNt :: Nonterminal -> [[Symbol]]
     rulesRpNt nt = [rp | (Rule nt' rp) <- S.toList rs, nt' == nt]
 
-noncontractingRules :: S.Set Rule -> S.Set Rule
-noncontractingRules rs = undefined
+nullableRules :: S.Set Rule -> S.Set Rule
+nullableRules rs = S.filter (\(Rule _ rp) -> rp == []) rs
 
+noncontractingRules :: S.Set Rule -> S.Set Nonterminal -> S.Set Rule
+noncontractingRules rs nullnts = generatedRs
+  where
+   knownNullableRules = nullableRules rs
+   nrs = rs S.\\ knownNullableRules
+
+   isNtInRP :: Nonterminal -> Rule -> Bool
+   isNtInRP nt (Rule _ rp) = elem (Nt nt) rp 
+   isNtInRP _ _ = False
+
+   rsContainingNtInRP :: Nonterminal -> S.Set Rule -> S.Set Rule
+   rsContainingNtInRP nt = S.filter (isNtInRP nt)
+
+   genRules :: Rule -> Nonterminal -> S.Set Rule 
+   genRules (Rule ntr rp) nt
+     | not $ elem (Nt nt) rp = S.fromList [Rule ntr rp]
+     | otherwise = S.singleton (Rule ntr rp) `S.union`
+                   genRules (Rule ntr $ L.delete (Nt nt) rp) nt
+
+   generatedRs = S.unions [S.unions $ map (\r -> genRules r nnt) $
+                           S.toList $ rsContainingNtInRP nnt nrs
+                 | nnt <- S.toList nullnts]
+   
 noncontractingCFG :: CFG -> CFG
-noncontractingCFG g = undefined
+noncontractingCFG (CFG nts _ rs initial) = 
+  undefined

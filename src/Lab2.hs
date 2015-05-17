@@ -27,10 +27,20 @@ main = do
         , "A -> "
         , "S -> AB"
         ]
+      nonterminals2 = S.fromList ['S']
+      terminals2 = S.fromList ['a', 'b']
+      rules2 =
+        [ "S -> aSbS"
+        , "S -> bSaS"
+        , "S -> "
+        ]
       rs = S.fromList $ map (\s -> case parse ruleParser "test" s of
                                     Left err -> undefined
-                                    Right res -> res) rules
+                                    Right res -> res) rules2
       initial = 'S'
-      cfg = CFG nonterminals terminals rs initial
-  print $ nullables cfg
+      cfg = CFG nonterminals2 terminals2 rs initial
+      nullablents = nullables cfg
+  print rs
+  print nullablents
+  print $ noncontractingRules rs nullablents
 
