@@ -16,8 +16,8 @@ import Control.Monad (replicateM)
 
 import Debug.Trace
 
-type Terminal = Char
-type Nonterminal = Char
+type Terminal = String
+type Nonterminal = String
 data Symbol = T Terminal | Nt Nonterminal
             deriving (Show, Eq, Ord)
 data Rule = Rule Nonterminal [Symbol]
@@ -99,13 +99,13 @@ noncontractingRules rs nullnts = generatedRs
    
 noncontractingCFG :: CFG -> CFG
 noncontractingCFG (CFG nts ts rs initial) = if initial `S.member` nts'
-                                            then CFG (nts' `S.union` (S.singleton 'N')) ts rs' initial'
+                                            then CFG (nts' `S.union` (S.singleton "N")) ts rs' initial'
                                             else CFG nts' ts rs' initial'
   where
     nts' = nullables (CFG nts ts rs initial)
     rs' = if initial `S.member` nts'
-          then S.fromList [Rule 'N' [Nt 'S'], Rule 'N' []] `S.union` noncontractingRules rs nts'
+          then S.fromList [Rule "N" [Nt "S"], Rule "N" []] `S.union` noncontractingRules rs nts'
           else noncontractingRules rs nts'
     initial' = if initial `S.member` nts'
-               then 'N'
+               then "N"
                else initial
