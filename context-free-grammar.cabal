@@ -35,3 +35,12 @@ executable lab3
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+executable lab5
+  main-is:             Lab5.hs
+  build-depends:       base >=4.8 && <4.9
+                     , containers
+                     , mtl
+  ghc-options:         -Wall
+  hs-source-dirs:      src
+  default-language:    Haskell2010
