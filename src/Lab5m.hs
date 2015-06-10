@@ -1,5 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables, ViewPatterns #-}
 
+module Lab5m where
+
 import Data.Maybe
 import Data.List
 import Control.Arrow
@@ -26,10 +28,10 @@ data Atom a = RT a
 
 instance (Show a) => Show (Atom a) where
   show (RT a) = show a
-  show RS = ""
-  show RA = ""
-  show ROBrace = ""
-  show RCBrace = ""
+  show RS = "$"
+  show RA = "$"
+  show ROBrace = "("
+  show RCBrace = ")"
 
 type RelationTable a = Map (a, a) Ordering
 
@@ -133,9 +135,3 @@ tableOp op a b = relationTable op M.! (a, b)
 
 tableOpParser :: [Op String] -> String -> Parsed String
 tableOpParser ops = opParser' tableOp ops . words
-
-main :: IO ()
-main = do
-  -- print $ M.toList $ relationTable ops
-  print $ tableOpParser ops "( 1 + 2 ) * 2" 
-  where ops = [Op "+" 1 Infixl, Op "*" 2 Infixl]
